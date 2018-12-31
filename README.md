@@ -1,11 +1,11 @@
 # Indoor-Localization-Using-Bayesian-Filters
 An approach to indoor localization using an Android cellphone and Bayesian Filters
 
-![](/home/joseph/GitFiles/IndoorLocalizationUsingBayesianFilter/Images/view_location.png)
+![](Images/view_location.png)
 
 ## Block Diagram
 
-![](/home/joseph/GitFiles/IndoorLocalizationUsingBayesianFilter/Images/FlowChart.png)
+![](Images/FlowChart.png)
 
 ## Instructions
 
