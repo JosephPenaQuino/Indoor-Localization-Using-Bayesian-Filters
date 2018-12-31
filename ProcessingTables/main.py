@@ -8,10 +8,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from lxml import etree as xml
 
-
-print("Hello World")
-
-
 # ------------------------------------- Functions -------------------------------------
 def print_list(list_data):
     for value in list_data:
