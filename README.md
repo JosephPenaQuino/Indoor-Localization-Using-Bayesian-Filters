@@ -20,5 +20,5 @@ An approach to indoor localization using an Android cellphone and Bayesian Filte
 1. Bayesian Filters
 2. Android Development
 
-
-
+## Further Steps
+1. Implement Particle Filters Algorithm
