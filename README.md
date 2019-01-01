@@ -16,7 +16,9 @@ An approach to indoor localization using an Android cellphone and Bayesian Filte
 5. Move the previous files to Android Studio project
 6. Program Android cellphone
 
-
+## References
+1. Bayesian Filters
+2. Android Development
 
 
 
