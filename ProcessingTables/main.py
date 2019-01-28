@@ -25,9 +25,28 @@ def print_probabilities(data_list, rooms_):
         print(val + ": " + str(data_list[ind]*100) + "%")
 
 
+def print_table(rows_labels, columns_labels, data):
+    # row_format = "{:>25}" * (len(rows_labels) + 1)
+    # row_format = "{:>25}" * (10 + 1)
+    row_format = "{:>25}" * (len(columns_labels) + 1)
+
+    print("-"*1700)
+    print(row_format.format("", *columns_labels))
+
+    for team, row_ in zip(rows_labels, data):
+        print(row_format.format(team, *row_))
+
+
+def print_access_points(rows_labels, columns_labels, data, ap):
+    for i, a_p_ in enumerate(ap):
+        print("-" * 1700)
+        print(" "*40+a_p_)
+        print_table(rows_labels, columns_labels, data[i])
+
+
 # ---------------------------------------- Main ---------------------------------------
 # Read CSV files
-with open('InputFiles/train_home_data.csv', 'rt') as f:
+with open('InputFiles/train_data.csv', 'rt') as f:
     reader = csv.reader(f)
     wifi_data = list(reader)
 wifi_data_pre = wifi_data
@@ -84,11 +103,12 @@ for ap_index, ap in enumerate(access_point):
         vector = current_row[:, rssi]
         ap_table[ap_index, room_index, std] = np.std(vector.astype(np.int))
         ap_table[ap_index, room_index, mean] = np.mean(vector.astype(np.int))
-    print(str(np.ceil(100*ap_index/access_point.size))+"%")
+    # print(str(np.ceil(100*ap_index/access_point.size))+"%")
 
 rss_vector = np.array(list(range(min_rss, max_rss)))
 
 AccessPointsTable = [[[0.0 for x in range(rss_vector.size)] for y in range(rooms.size)] for z in range(access_point.size)]
+
 # Getting Gaussian data
 for i, AP in enumerate(access_point):
     for j, cell in enumerate(rooms):
@@ -103,32 +123,54 @@ for i, AP in enumerate(access_point):
         c_sum = sum(AccessPointsTable[i][j])
         for k, v in enumerate(AccessPointsTable[i][j]):
             AccessPointsTable[i][j][k] = v / c_sum
-    print(str(np.ceil(100 * i / access_point.size)) + "%")
+    # print(str(np.ceil(100 * i / access_point.size)) + "%")
 
 AccessPointsTable = np.array(AccessPointsTable)
 
-print_list(access_point)
-print_list(rooms)
+# print_list(access_point)
+# print_list(rooms)
 
-print(ap_table[0, 0, mean])
+# print(ap_table[0, 0, mean])
 
+# print_table(rooms, rss_vector, AccessPointsTable[0, :, :])
+# print_table(rooms, rss_vector, AccessPointsTable[1, :, :])
+# print_table(rooms, rss_vector, AccessPointsTable[2, :, :])
+
+# print_table(rooms, rss_vector, ap_table)
+# print_table(rooms, rss_vector, ap_table[1, :, :])
+# print_table(rooms, rss_vector, ap_table[2, :, :])
+
+print_access_points(rooms, ['std', 'mean'], ap_table, access_point)
+
+all_data = False
+if all_data:
+    for i, ap_label in enumerate(access_point):
+        for j, room_label in enumerate(rooms):
+            plt.plot(rss_vector, AccessPointsTable[i, j, :])
+            plt.ylabel('Probability')
+            plt.xlabel('RSS')
+            plt.title(ap_label+' - '+room_label)
+            plt.show()
 
 some_data = False
 if some_data:
+
     # Plotting Aroldo my cuarto rss Gaussian
-    plt.plot(rss_vector, AccessPointsTable[10, 2, :])
+    plt.plot(rss_vector, AccessPointsTable[0, 0, :])
     plt.ylabel('Probability')
     plt.xlabel('RSS')
+    plt.title('AC1 - R1')
     plt.show()
     # Plotting RUTH my cuarto rss Gaussian
-    plt.plot(rss_vector, AccessPointsTable[4, 1, :])
+    plt.plot(rss_vector, AccessPointsTable[0, 1, :])
     plt.ylabel('Probability')
     plt.xlabel('RSS')
+    plt.title('AC1 - R2')
     plt.show()
 
 print_xml = False
 if print_xml:
-    filename = "Output/FinalData.xml"
+    filename = "OutputFiles/FinalData.xml"
     root = xml.Element("APTables")
     for i, AP in enumerate(access_point):
         AP_table = xml.Element('AP_table', SSID=AP)
@@ -144,6 +186,77 @@ if print_xml:
 
     outFile = open(filename, 'wb')
     tree.write(outFile, pretty_print=True)
+
+Testing_test_data = True
+if Testing_test_data:
+    Sample = [
+        ['test_room_1', 'ac_1', '1', '-99', '2018-08-30 8:08:19'],
+        ['test_room_1', 'ac_2', '2', '-81', '2018-08-30 8:08:19'],
+        ['test_room_1', 'ac_3', '3', '-68', '2018-08-30 8:08:19']
+    ]
+    print("------------------ Sample Testing -----------------")
+    # ----------------- Getting the room of the max rss ----------
+    max_rss_sampled = [-100 for i in range(3)]
+    max_rss_wifi = ['' for i in range(3)]
+
+    for index_rss_sampled, value_rss_sampled in enumerate(max_rss_sampled):
+        for data_scanned in Sample:
+            current_rss = int(data_scanned[rssi])
+            if current_rss > max_rss_sampled[index_rss_sampled] and current_rss not in max_rss_sampled:
+                max_rss_sampled[index_rss_sampled] = current_rss
+                max_rss_wifi[index_rss_sampled] = data_scanned[bssid]
+
+    probabilities = [0.1 / len(rooms) for i in rooms]
+
+    temporal_probabilities = [[0.0 for i in range(len(rooms))] for j in range(3)]
+
+    for i in range(3):
+        # Getting the column of rss
+        new_array = []
+        for AP_index, AP in enumerate(AccessPointsTable):
+            current_AP = access_point[AP_index]
+            if current_AP == max_rss_wifi[i]:
+                for room_index, room in enumerate(AP):
+                    new_array.append(room[max_rss_sampled[i] - min_rss])
+        # Multiplying
+        for index, v in enumerate(new_array):
+            temporal_probabilities[i][index] = probabilities[index] * v
+
+        # Normalizing
+        normalizer_value = sum(temporal_probabilities[i])
+        for index, item in enumerate(temporal_probabilities[i]):
+            if normalizer_value == 0:
+                temporal_probabilities[i][index] = 0
+            else:
+                temporal_probabilities[i][index] = temporal_probabilities[i][index] / normalizer_value
+
+    probabilities1 = temporal_probabilities[0]
+    probabilities2 = temporal_probabilities[1]
+    probabilities3 = temporal_probabilities[2]
+
+    # final_results = [0.0, 0.0, 0.0]
+    final_results = [0.0 for i in range(rooms.size)]
+    for i in range(len(final_results)):
+        final_results[i] = (temporal_probabilities[0][i] +
+                            temporal_probabilities[1][i] + temporal_probabilities[2][i]) / 3.0
+
+    print_results = True
+    if print_results:
+        print("------------------ Sample Testing -----------------")
+        print_list(Sample)
+        print("------------------ Applying Bayes -----------------")
+        print("\n\nInitial array of probabilities:\n")
+        print_probabilities(probabilities, rooms)
+        print("\n\nArray 1 of probabilities:\n")
+        print_probabilities(temporal_probabilities[0], rooms)
+        print("\n\nArray 2 of probabilities:\n")
+        print_probabilities(temporal_probabilities[1], rooms)
+        print("\n\nArray 3 of probabilities:\n")
+        print_probabilities(temporal_probabilities[2], rooms)
+        print("\n\nFinal array of probabilities:\n")
+        print_probabilities(final_results, rooms)
+
+
 Testing = False
 if Testing:
     # --------------------- Testing ----------------------
